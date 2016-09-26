@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Collections;
 using System;
 
-class UpgradeVsProject: AssetPostprocessor{
+class UpgradeVsProject: AssetPostprocessor{ 
 	private static void OnGeneratedCSProjectFiles(){
 		string currentDir = Directory.GetCurrentDirectory();
 		string[] csprojFiles = Directory.GetFiles(currentDir, "*.csproj");
