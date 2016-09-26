@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿
+using UnityEngine;
 using System.Collections;
 
 [ExecuteInEditMode]
@@ -11,7 +12,7 @@ public class CustomTextMesh : MonoBehaviour{
 	MeshFilter meshFilter = null;
 	MeshRenderer meshRenderer = null;
 	[TextArea(3, 50)]
-	[SerializeField] string _text;
+	[SerializeField] string _text = "Text";
 	string prevText;
 
 	TextGenerator textGen{
