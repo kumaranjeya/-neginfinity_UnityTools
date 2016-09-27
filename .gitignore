@@ -72,6 +72,8 @@ Desktop.ini.meta
 /Packages
 #Builds
 /Builds
+#Internal misc
+/Internal
 
 # lightmaps.
 #Assets/Prototyping/Scenes/castle/

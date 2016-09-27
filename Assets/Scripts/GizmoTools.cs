@@ -6,7 +6,6 @@ public static class GizmoTools{
 
 	public delegate void LineCallback2DData<Data>(Vector2 a, Vector2 b, Data data);
 	public delegate void LineCallback2D(Vector2 a, Vector2 b);
-	//public delegate void AngleCallback(float prevAngle, float nextAngle);
 
 	public static void gizmoLine(Vector3 a, Vector3 b){
 		Gizmos.DrawLine(a, b);
@@ -58,30 +57,26 @@ public static class GizmoTools{
 		}
 	}
 
-	public static void processWireCube(Vector3 position, 
-			Vector3 xVec, Vector3 yVec, Vector3 zVec, bool makePivotAxes = false){
-		processWireCube(position, xVec, yVec, zVec, makePivotAxes, new Vector3(0.5f, 0.5f, 0.5f), gizmoLine);
+	public static void processWireCube(GizmoCoords coords, bool makePivotAxes = false){
+		processWireCube(coords, makePivotAxes, new Vector3(0.5f, 0.5f, 0.5f), gizmoLine);
 	}
 
-	public static void processWireCube(Vector3 position, 
-			Vector3 xVec, Vector3 yVec, Vector3 zVec, bool makePivotAxes, Vector3 pivotOffset){
-		processWireCube(position, xVec, yVec, zVec, makePivotAxes, pivotOffset, gizmoLine);
+	public static void processWireCube(GizmoCoords coords, bool makePivotAxes, Vector3 pivotOffset){
+		processWireCube(coords, makePivotAxes, pivotOffset, gizmoLine);
 	}
 
-	public static void processWireCube(Vector3 position, 
-			Vector3 xVec, Vector3 yVec, Vector3 zVec, bool makePivotAxes, Vector3 pivotOffset, LineCallback lineCallback){
-
+	public static void processWireCube(GizmoCoords coords, bool makePivotAxes, Vector3 pivotOffset, LineCallback lineCallback){
 		if (lineCallback == null)
 			throw new System.ArgumentNullException();
 
-		var a = position - xVec * pivotOffset.x - yVec * pivotOffset.y - zVec * pivotOffset.z;
-		var b = a + xVec;
-		var c  = a + yVec;
-		var d = b + yVec;
-		var a1 = a + zVec;
-		var b1 = b + zVec;
-		var c1 = c + zVec;
-		var d1 = d + zVec;
+		var a = coords.pos - coords.xVec * pivotOffset.x - coords.yVec * pivotOffset.y - coords.zVec * pivotOffset.z;
+		var b = a + coords.xVec;
+		var c  = a + coords.yVec;
+		var d = b + coords.yVec;
+		var a1 = a + coords.zVec;
+		var b1 = b + coords.zVec;
+		var c1 = c + coords.zVec;
+		var d1 = d + coords.zVec;
 
 		lineCallback(a, b);
 		lineCallback(a, c);
@@ -99,13 +94,13 @@ public static class GizmoTools{
 		if (!makePivotAxes)
 			return;
 
-		var pivotX = position - pivotOffset.x * xVec;
-		var pivotY = position - pivotOffset.y * yVec;
-		var pivotZ = position - pivotOffset.z * zVec;
+		var pivotX = coords.pos - pivotOffset.x * coords.xVec;
+		var pivotY = coords.pos - pivotOffset.y * coords.yVec;
+		var pivotZ = coords.pos - pivotOffset.z * coords.zVec;
 
-		lineCallback(pivotX, pivotX + xVec);
-		lineCallback(pivotY, pivotY + yVec);
-		lineCallback(pivotZ, pivotZ + zVec);
+		lineCallback(pivotX, pivotX + coords.xVec);
+		lineCallback(pivotY, pivotY + coords.yVec);
+		lineCallback(pivotZ, pivotZ + coords.zVec);
 	}
 
 
@@ -119,17 +114,8 @@ public static class GizmoTools{
 	}
 
 	public static void drawWireCube(Vector3 position, Vector3 size, Quaternion rotation, Vector3 pivot, bool pivotAxes = false){
-		var xVec = size.x * Vector3.right;
-		var yVec = size.y * Vector3.up;
-		var zVec = size.z * Vector3.forward;
-
-		if (rotation != Quaternion.identity){
-			xVec = rotation * xVec;
-			yVec = rotation * yVec;
-			zVec = rotation * zVec;
-		}
-
-		processWireCube(position, xVec, yVec, zVec, pivotAxes, pivot);
+		var coords = new GizmoCoords(position, rotation, size);
+		processWireCube(coords, pivotAxes, pivot);
 	}
 
 	public static void drawWireCube(Transform transform, Vector3 size){
@@ -137,14 +123,8 @@ public static class GizmoTools{
 	}
 
 	public static void drawWireCube(Transform transform, Vector3 size, Vector3 pivot, bool pivotAxes = false){
-		if (!transform){
-			throw new System.ArgumentNullException();
-		}
-		var xVec = transform.TransformVector(Vector3.right * size.x);
-		var yVec = transform.TransformVector(Vector3.up * size.y);
-		var zVec = transform.TransformVector(Vector3.forward * size.z);
-
-		processWireCube(transform.position, xVec, yVec, zVec, pivotAxes, pivot);
+		var coords = new GizmoCoords(transform, size);
+		processWireCube(coords, pivotAxes, pivot);
 	}
 
 	static Vector3 getUnitSphereVertex(float u, float v){
@@ -158,65 +138,34 @@ public static class GizmoTools{
 		);
 	}
 
-	static Vector3 getSphereVertex(float u, float v, Vector3 position, Vector3 xVec, Vector3 yVec, Vector3 zVec){
+	static Vector3 getSphereVertex(float u, float v, GizmoCoords coords){
 		var unitVert = getUnitSphereVertex(u, v);
-		return position + unitVert.x * xVec + unitVert.y * yVec + unitVert.z * zVec;
+		return coords.pos + unitVert.x * coords.xVec + unitVert.y * coords.yVec + unitVert.z * coords.zVec;
 	}
 
-	public static void processUvSphere(Vector3 position, Vector3 xVec, Vector3 yVec, Vector3 zVec, 
-			int uSegments, int vSegments, LineCallback lineCallback){
-		if (uSegments < 3)
+	public static void processUvSphere(GizmoCoords coords, int uSegments, int vSegments, LineCallback lineCallback){
+		if (lineCallback == null)
+			throw new System.ArgumentNullException();
+		
+		if (uSegments < 3){
 			uSegments = 3;
-		if (vSegments < 3)
-			vSegments = 3;
-
-		float uStep = 1.0f / (float)uSegments;
-		float vStep = 1.0f / (float)vSegments;
-
-		Vector3 northPole = getSphereVertex(0.0f, 1.0f, position, xVec, yVec, zVec);
-		Vector3 southPole = getSphereVertex(0.0f, 0.0f, position, xVec, yVec, zVec);
-		float minSegmentV = vStep;
-		float maxSegmentV = 1.0f - vStep;
-
-		for (int iU = 0; iU < uSegments; iU++){
-			float curU = uStep * (float)iU;
-			float nextU = uStep * (float)(iU + 1);
-			//I really need to use matrices here instead of this
-			//poles
-			{
-				var north1 = getSphereVertex(curU, maxSegmentV, position, xVec, yVec, zVec);
-				//var north2 = getSphereVertex(nextU, maxSegmentV, position, xVec, yVec, zVec);
-				var south1 = getSphereVertex(curU, minSegmentV, position, xVec, yVec, zVec);
-				var south2 = getSphereVertex(nextU, minSegmentV, position, xVec, yVec, zVec);
-				lineCallback(northPole, north1);
-				lineCallback(southPole, south1);
-				lineCallback(south1, south2);
-			}
-			//segments between poles
-			for (int iV = 2; iV < vSegments; iV++){
-				float curV = vStep * (float)iV;
-				float prevV = vStep * (float)(iV - 1);
-
-				var a = getSphereVertex(curU, curV, position, xVec, yVec, zVec);
-				var b = getSphereVertex(nextU, curV, position, xVec, yVec, zVec);
-				var c = getSphereVertex(curU, prevV, position, xVec, yVec, zVec);
-
-				lineCallback(a, b);
-				lineCallback(a, c);
-			}
 		}
+		if (vSegments < 2){
+			vSegments = 12;
+		}
+
+		Vector3 northPole = getSphereVertex(0.0f, 1.0f, coords);
+		Vector3 southPole = getSphereVertex(0.0f, 0.0f, coords);
+
+		processUvSurface<GizmoCoords>(uSegments, vSegments, 0, uSegments, 1, vSegments - 1,
+			northPole, southPole, true, true, 
+			(u, v, data) => getSphereVertex(u, v, data),
+			lineCallback, coords);
 	}
 
 	public static void drawWireSphere(Transform transform, float localRadius, int uSegments = 8, int vSegments = 4){
-		if (!transform)
-			throw new System.ArgumentNullException();
-
-		var pos = transform.position;
-		var xVec = transform.TransformVector(Vector3.right * localRadius);
-		var yVec = transform.TransformVector(Vector3.up * localRadius);
-		var zVec = transform.TransformVector(Vector3.forward * localRadius);
-
-		drawWireSphere(pos, xVec, yVec, zVec, uSegments, vSegments);
+		var coords = new GizmoCoords(transform, new Vector3(localRadius, localRadius, localRadius));
+		drawWireSphere(coords, uSegments, vSegments);
 	}
 
 	public static void drawWireSphere(Vector3 position, float radius, int uSegments = 8, int vSegments = 4){
@@ -224,19 +173,264 @@ public static class GizmoTools{
 	}
 
 	public static void drawWireSphere(Vector3 position, float radius, int uSegments, int vSegments, Quaternion rotation){
-		var xVec = Vector3.right * radius;
-		var yVec = Vector3.up * radius;
-		var zVec = Vector3.forward * radius;
-		if (rotation != Quaternion.identity){
-			xVec = rotation * xVec;
-			yVec = rotation * yVec;
-			zVec = rotation * zVec;
-		}
-		drawWireSphere(position, xVec, yVec, zVec, uSegments, vSegments);
+		var coords = new GizmoCoords(position, rotation, new Vector3(radius, radius, radius));
+		drawWireSphere(coords, uSegments, vSegments);
 	}
 
-	public static void drawWireSphere(Vector3 position, Vector3 xVec, Vector3 yVec, Vector3 zVec, 
-			int uSegments, int vSegments){
-		processUvSphere(position, xVec, yVec, zVec, uSegments, vSegments, gizmoLine);
+	static Vector3 getUnitCylinderVertex(float u, float v, Vector3 pos, Vector3 xVec, Vector3 yVec, Vector3 zVec){
+		var sinCos = getSinCos(u * Mathf.PI * 2.0f);
+
+		var result = pos + xVec * (-sinCos.y) + yVec * v + zVec*sinCos.x;
+		return result;
 	}
+
+	public static void drawWireSphere(GizmoCoords coords, int uSegments, int vSegments){
+		processUvSphere(coords, uSegments, vSegments, gizmoLine);
+	}
+
+	public static void processWireCylinder(GizmoCoords coords, int uSegments, int vSegments, float vPivot, LineCallback lineCallback){
+		if (lineCallback == null)
+			throw new System.ArgumentNullException();
+		
+		var southPole = coords.pos - coords.yVec * vPivot;
+		var northPole = southPole + coords.yVec;
+
+		coords.pos = southPole;
+
+		if (uSegments < 3){
+			uSegments = 3;
+		}
+		if (vSegments < 1){
+			vSegments = 1;
+		}
+
+		processUvSurface<GizmoCoords>(uSegments, vSegments, 0, uSegments, 0, vSegments,
+			northPole, southPole, true, true, 
+			(u, v, data) => getUnitCylinderVertex(u, v, data.pos, data.xVec, data.yVec, data.zVec), 
+			lineCallback, coords);
+	}
+
+	public static void drawWireCylinder(Vector3 position, float radius, float height){
+		drawWireCylinder(position, radius, height, Quaternion.identity);
+	}
+
+	public static void drawWireCylinder(Vector3 position, float radius, float height, Quaternion rotation, float vPivot = 0.0f, int uSegments = 8, int vSegments = 1){		
+		var coords = new GizmoCoords(position, rotation, new Vector3(radius, height, radius));
+		processWireCylinder(coords, uSegments, vSegments, vPivot, gizmoLine);
+	}
+
+	public static void drawWireCylinder(Transform transform, float localRadius, float localHeight, float vPivot = 0.0f, int uSegments = 8, int vSegments = 1){
+		var coords = new GizmoCoords(transform, new Vector3(localRadius, localHeight, localRadius));
+		processWireCylinder(coords, uSegments, vSegments, vPivot, gizmoLine);
+	}
+
+	public delegate Vector3 UvSurfaceCallback<Data>(float u, float v, Data data);
+
+	public struct GizmoCoords{
+		public Vector3 pos;
+		public Vector3 xVec;
+		public Vector3 yVec;
+		public Vector3 zVec;
+
+		public GizmoCoords(Vector3 pos_){
+			pos = pos_;
+			xVec = Vector3.right;
+			yVec = Vector3.up;
+			zVec = Vector3.forward;
+		}
+
+		void defaultInit(){
+			pos = Vector3.zero;
+			xVec = Vector3.right;
+			yVec = Vector3.up;
+			zVec = Vector3.forward;
+		}
+
+		public GizmoCoords(Vector3 pos_, Quaternion rotation)
+		:this(pos_, rotation, Vector3.one){
+		}
+
+		public GizmoCoords(Vector3 pos_, Quaternion rotation, Vector3 scale){
+			pos = pos_;
+			xVec = Vector3.right * scale.x;
+			yVec = Vector3.up * scale.y;
+			zVec = Vector3.forward * scale.z;
+			if (rotation != Quaternion.identity){
+				xVec = rotation * xVec;
+				yVec = rotation * yVec;
+				zVec = rotation * zVec;
+			}
+		}
+
+		public GizmoCoords(Transform transform)
+		:this(transform, Vector3.one){
+		}
+
+		public GizmoCoords(Transform transform, Vector3 localScale){
+			if (transform == null)
+				throw new System.ArgumentNullException();
+			pos = transform.position;
+			xVec = transform.TransformVector(new Vector3(localScale.x, 0.0f, 0.0f));
+			yVec = transform.TransformVector(new Vector3(0.0f, localScale.y, 0.0f));
+			zVec = transform.TransformVector(new Vector3(0.0f, 0.0f, localScale.z));
+		}
+
+		public GizmoCoords(Vector3 pos_, Vector3 xVec_, Vector3 yVec_, Vector3 zVec_){
+			pos = pos_;
+			xVec = xVec_;
+			yVec = yVec_;
+			zVec = zVec_;
+		}
+	}
+
+	public static void processUvSurface<Data>(int uSegments, int vSegments, 
+		int minUSegment, int maxUSegment, int minVSegment, int maxVSegment, 
+		Vector3 northPole, Vector3 southPole, bool capNorthPole, bool capSouthPole, 
+		UvSurfaceCallback<Data> surfaceCallback, LineCallback lineCallback, Data data){
+
+		if (lineCallback == null)
+			throw new System.ArgumentNullException();
+		if (lineCallback == null)
+			throw new System.ArgumentNullException();
+
+		if (uSegments <= 0)
+			throw new System.ArgumentException();
+		if (vSegments <= 0)
+			throw new System.ArgumentException();
+
+		float uStep = 1.0f/(float)uSegments;
+		float vStep = 1.0f/(float)vSegments;
+
+		float minV = vStep * (float)minVSegment;
+		float maxV = vStep * (float)maxVSegment;
+		for(int iU = minUSegment; iU < maxUSegment; iU++){
+			float curU = uStep * (float)iU;
+			float nextU = curU + uStep;
+
+			{
+				var south1 = surfaceCallback(curU, minV, data);
+				var south2 = surfaceCallback(nextU, minV, data);
+				lineCallback(south1, south2);
+
+				if (capSouthPole){
+					lineCallback(southPole, south1);
+				}
+
+				if (capNorthPole){
+					var north1 = surfaceCallback(curU, maxV, data);
+					lineCallback(northPole, north1);
+				}
+			}
+
+			for(int iV = minVSegment + 1; iV <= maxVSegment; iV++){
+				float curV = vStep * (float)iV;
+				float prevV = curV - vStep;
+				var a = surfaceCallback(curU, curV, data);
+				var b = surfaceCallback(nextU, curV, data);
+				var c = surfaceCallback(curU, prevV, data);
+				lineCallback(a, b);
+				lineCallback(a, c);
+			}
+		}
+	}
+
+	static Vector3 getUnitConeVertex(float u, float v){
+		var sinCos = getSinCos(u * (float)Mathf.PI * 2.0f);
+		var r = 1.0f - v;
+		return new Vector3(-sinCos.y * r, v, sinCos.x*r);
+	}
+
+	static Vector3 getConeVertex(float u, float v, Vector3 pos, Vector3 xVec, Vector3 yVec, Vector3 zVec){
+		var tmp = getUnitConeVertex(u, v);
+		return pos + tmp.x * xVec + tmp.y*yVec + tmp.z*zVec;
+	}
+
+	public static void processWireCone(GizmoCoords coords, 
+			int uSegments, int vSegments, float vPivot, LineCallback lineCallback){
+		if (lineCallback == null)
+			throw new System.ArgumentNullException();
+		
+		var southPole = coords.pos - coords.yVec * vPivot;
+		var northPole = southPole + coords.yVec;
+
+		if (uSegments < 3){
+			uSegments = 3;
+		}
+		if (vSegments < 1)
+			vSegments = 1;
+
+		coords.pos = southPole;
+		processUvSurface<GizmoCoords>(uSegments, vSegments, 0, uSegments, 0, vSegments,
+			northPole, southPole, true, true, 
+			(u, v, data) => getConeVertex(u, v, data.pos, data.xVec, data.yVec, data.zVec), 
+			lineCallback, coords);
+	}
+
+	public static void drawWireCone(Transform transform, float localRadius, float localHeight, float vPivot = 0.0f, int uSegments = 8, int vSegments = 1){
+		GizmoCoords coords = new GizmoCoords(transform, new Vector3(localRadius, localHeight, localRadius));
+		processWireCone(coords, uSegments, vSegments, vPivot, gizmoLine);
+	}
+
+	public static void drawWireCone(Vector3 position, float radius, float height, Quaternion rotation, float vPivot = 0.0f, int uSegments = 8, int vSegments = 1){
+		GizmoCoords coords = new GizmoCoords(position, rotation, new Vector3(radius, height, radius));
+		processWireCone(coords, uSegments, vSegments, vPivot, gizmoLine);
+	}
+
+	struct UvLineTransform{
+		public float len;
+		public Quaternion rotation;
+		public UvLineTransform(Vector3 start, Vector3 end){
+			rotation = Quaternion.identity;
+			len = 0.0f;
+			var diff = end - start;
+			if (diff == Vector3.zero)
+				return;
+			len = diff.magnitude;
+			var dir = diff/len;
+			rotation = Quaternion.FromToRotation(Vector3.up, dir);			
+		}
+	}
+
+	public static void drawCylinderLine(Vector3 start, Vector3 end, float radius, int uSegments = 8, int vSegments = 1){
+		var uvTransform = new UvLineTransform(start, end);
+		if (uvTransform.len <= 0.0f)
+			return;
+
+		drawWireCylinder(start, radius, uvTransform.len, uvTransform.rotation, 0.0f, uSegments, vSegments);
+	}
+
+	public static void drawCylinderLineAdaptive(Vector3 start, Vector3 end, float radius, int uSegments = 8, float vSize = 1.0f){
+		var uvTransform = new UvLineTransform(start, end);
+		if (uvTransform.len <= 0.0f)
+			return;
+
+		int vSegments = 1;
+
+		if (vSize > 0.0f)
+			vSegments = Mathf.CeilToInt(uvTransform.len/vSize);
+
+		drawWireCylinder(start, radius, uvTransform.len, uvTransform.rotation, 0.0f, uSegments, vSegments);
+	}
+
+	public static void drawConeLine(Vector3 start, Vector3 end, float radius, int uSegments = 8, int vSegments = 1){
+		var uvTransform = new UvLineTransform(start, end);
+		if (uvTransform.len <= 0.0f)
+			return;
+
+		drawWireCone(start, radius, uvTransform.len, uvTransform.rotation, 0.0f, uSegments, vSegments);
+	}
+
+	public static void drawConeLineAdaptive(Vector3 start, Vector3 end, float radius, int uSegments = 8, float vSize = 1.0f){
+		var uvTransform = new UvLineTransform(start, end);
+		if (uvTransform.len <= 0.0f)
+			return;
+
+		int vSegments = 1;
+
+		if (vSize > 0.0f)
+			vSegments = Mathf.CeilToInt(uvTransform.len/vSize);
+
+		drawWireCone(start, radius, uvTransform.len, uvTransform.rotation, 0.0f, uSegments, vSegments);
+	}
+
 }
