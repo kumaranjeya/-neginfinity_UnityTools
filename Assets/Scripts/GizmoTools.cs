@@ -486,4 +486,42 @@ public static class GizmoTools{
 				(u, v, data) => data.coords.transformPoint(getUnitSphereVertex(u, data.minV + data.vScale * v)), 
 			gizmoLine, coneData);
 	}
+
+	struct ViewConeGizmoData{
+		public GizmoCoords coords;
+		public float startU;
+		//public float maxU;
+		public float uSize;
+		public float startV;
+		public float vSize;
+		//public float minV;
+		//public float maxV;
+	}
+
+	public static void drawVisionCone(Vector3 start, Quaternion rotation, float hFovDegrees, float vFovDegrees, float range, float angleDegreesPerSegment = 10.0f){
+		if (angleDegreesPerSegment < 0.0f)
+			throw new System.ArgumentException();
+		var viewData = new ViewConeGizmoData();
+		viewData.coords = new GizmoCoords(start, rotation, new Vector3(range, range, range));
+		viewData.uSize = Mathf.Deg2Rad * hFovDegrees / ((float)Mathf.PI * 2.0f);
+		viewData.vSize = Mathf.Deg2Rad * vFovDegrees / (float)Mathf.PI;
+		viewData.startU = - viewData.uSize*0.5f;
+		viewData.startV = 0.5f - viewData.vSize * 0.5f;
+
+		int numUSegments = Mathf.Max((int)(hFovDegrees / angleDegreesPerSegment), 2);
+		int numVSegments = Mathf.Max((int)(vFovDegrees / angleDegreesPerSegment), 2);
+
+		processUvSurface(numUSegments, numVSegments, 
+			0, numUSegments, 0, numVSegments, start, start, true, true, 
+				(u, v, data) => data.coords.transformPoint(getUnitSphereVertex(u * data.uSize + data.startU, v * data.vSize + data.startV)), 
+			gizmoLine, viewData);
+	}
+
+	public static void drawVisionCone(Transform transform, float hFovDegrees, float vFovDegrees, float range, float angleDegreesPerSegment = 10.0f){
+		if (!transform)
+			throw new System.ArgumentNullException();
+
+		drawVisionCone(transform.position, transform.rotation, hFovDegrees, vFovDegrees, range, angleDegreesPerSegment);
+	}
+
 }
