@@ -140,7 +140,7 @@ public static class GizmoTools{
 
 	static Vector3 getSphereVertex(float u, float v, GizmoCoords coords){
 		var unitVert = getUnitSphereVertex(u, v);
-		return coords.pos + unitVert.x * coords.xVec + unitVert.y * coords.yVec + unitVert.z * coords.zVec;
+		return coords.transformPoint(unitVert);
 	}
 
 	public static void processUvSphere(GizmoCoords coords, int uSegments, int vSegments, LineCallback lineCallback){
@@ -177,10 +177,10 @@ public static class GizmoTools{
 		drawWireSphere(coords, uSegments, vSegments);
 	}
 
-	static Vector3 getUnitCylinderVertex(float u, float v, Vector3 pos, Vector3 xVec, Vector3 yVec, Vector3 zVec){
+	static Vector3 getUnitCylinderVertex(float u, float v, GizmoCoords coords){
 		var sinCos = getSinCos(u * Mathf.PI * 2.0f);
 
-		var result = pos + xVec * (-sinCos.y) + yVec * v + zVec*sinCos.x;
+		var result = coords.transformPoint(new Vector3(-sinCos.y, v, sinCos.x));
 		return result;
 	}
 
@@ -206,7 +206,7 @@ public static class GizmoTools{
 
 		processUvSurface<GizmoCoords>(uSegments, vSegments, 0, uSegments, 0, vSegments,
 			northPole, southPole, true, true, 
-			(u, v, data) => getUnitCylinderVertex(u, v, data.pos, data.xVec, data.yVec, data.zVec), 
+			(u, v, data) => getUnitCylinderVertex(u, v, data), 
 			lineCallback, coords);
 	}
 
@@ -231,6 +231,14 @@ public static class GizmoTools{
 		public Vector3 xVec;
 		public Vector3 yVec;
 		public Vector3 zVec;
+
+		public Vector3 transformVector(Vector3 arg){
+			return xVec * arg.x + yVec * arg.y + zVec * arg.z;
+		}
+
+		public Vector3 transformPoint(Vector3 arg){
+			return pos + transformVector(arg);
+		}
 
 		public GizmoCoords(Vector3 pos_){
 			pos = pos_;
@@ -340,9 +348,10 @@ public static class GizmoTools{
 		return new Vector3(-sinCos.y * r, v, sinCos.x*r);
 	}
 
-	static Vector3 getConeVertex(float u, float v, Vector3 pos, Vector3 xVec, Vector3 yVec, Vector3 zVec){
+	static Vector3 getConeVertex(float u, float v, GizmoCoords coords){//Vector3 pos, Vector3 xVec, Vector3 yVec, Vector3 zVec){
 		var tmp = getUnitConeVertex(u, v);
-		return pos + tmp.x * xVec + tmp.y*yVec + tmp.z*zVec;
+		return coords.transformPoint(tmp);
+		//return pos + tmp.x * xVec + tmp.y*yVec + tmp.z*zVec;
 	}
 
 	public static void processWireCone(GizmoCoords coords, 
@@ -362,7 +371,7 @@ public static class GizmoTools{
 		coords.pos = southPole;
 		processUvSurface<GizmoCoords>(uSegments, vSegments, 0, uSegments, 0, vSegments,
 			northPole, southPole, true, true, 
-			(u, v, data) => getConeVertex(u, v, data.pos, data.xVec, data.yVec, data.zVec), 
+			(u, v, data) => getConeVertex(u, v, data),
 			lineCallback, coords);
 	}
 
@@ -433,4 +442,48 @@ public static class GizmoTools{
 		drawWireCone(start, radius, uvTransform.len, uvTransform.rotation, 0.0f, uSegments, vSegments);
 	}
 
+	public static void drawWeaponCone(Vector3 start, Vector3 target, float spreadAngleDegrees, float range, float angleDegreesPerSegment = 10.0f, int numRadialSegments = 8){
+		Vector3 dir = target-start;
+		if (range < 0.0f)
+			range = dir.magnitude;
+		dir = dir.normalized;
+		drawWeaponConeDir(start, dir, spreadAngleDegrees, range, angleDegreesPerSegment, numRadialSegments);
+	}
+
+	public static void drawWeaponCone(Transform transform, float spreadAngleDegrees, float range, float angleDegreesPerSegment = 10.0f, int numRadialSegments = 8){
+		if (!transform)
+			throw new System.ArgumentNullException();
+
+		drawWeaponConeDir(transform.position, transform.forward, spreadAngleDegrees, range, angleDegreesPerSegment, numRadialSegments);
+	}
+
+	struct WeaponConeData{
+		public GizmoCoords coords;
+		public float minV;
+		public float vScale;
+	}
+
+	public static void drawWeaponConeDir(Vector3 start, Vector3 dir, float spreadAngleDegrees, float range, float angleDegreesPerSegment = 10.0f, int numRadialSegments = 8){
+		if (angleDegreesPerSegment <= 0.0f)
+			throw new System.ArgumentException();
+		var rotation = Quaternion.FromToRotation(Vector3.up, dir);
+		var coneData = new WeaponConeData();
+		coneData.coords = new GizmoCoords(start, rotation, new Vector3(range, range, range));
+		float halfAngle = spreadAngleDegrees * 0.5f * Mathf.Deg2Rad;
+		coneData.vScale = halfAngle / (float)Mathf.PI;
+		coneData.minV = 1.0f - coneData.vScale;
+		int numVSegments = (int)(spreadAngleDegrees / angleDegreesPerSegment );
+		numVSegments = Mathf.Max(1, numVSegments);// + 1;
+		if (numRadialSegments < 3)
+			numRadialSegments = 3;
+		int numUSegments = numRadialSegments;
+
+		Vector3 northPole = start + dir * range;
+		Vector3 southPole = start;
+
+		processUvSurface(numUSegments, numVSegments, 
+			0, numUSegments, 0, numVSegments, northPole, southPole, true, true, 
+				(u, v, data) => data.coords.transformPoint(getUnitSphereVertex(u, data.minV + data.vScale * v)), 
+			gizmoLine, coneData);
+	}
 }

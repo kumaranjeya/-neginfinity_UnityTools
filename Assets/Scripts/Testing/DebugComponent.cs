@@ -5,6 +5,7 @@ public class DebugComponent : MonoBehaviour {
 	//public Vector3 pivot = new Vector3(0.5f, 0.5f, 0.5f);
 	//public Vector3 size = new Vector3(1.0f, 1.0f, 1.0f);
 	public Color color = ColorNames.Aqua.toColor();
+	/*
 	public float sphereRadius = 1.0f;
 	public int sphereU = 16;
 	public int sphereV = 16;
@@ -15,7 +16,6 @@ public class DebugComponent : MonoBehaviour {
 	public int cylinderU = 8;
 	public int cylinderV = 1;
 
-	public Transform targetObject;
 	public float lineRadius = 1.0f;
 	public int lineUSegments = 8;
 	public int lineVSegments = 8;
@@ -25,6 +25,13 @@ public class DebugComponent : MonoBehaviour {
 	public float conePivot = 0.0f;
 	public int coneUSegments = 5;
 	public int coneVSegments = 1;
+	*/
+	public float weaponConeRange = 5.0f;
+	public float weaponConeSpreadAngle = 90.0f;
+	public int weaponConeRadialSegments = 8;
+	public float weaponConeDegreesPerSegment = 5.0f;
+
+	public Transform targetObject;
 
 	// Use this for initialization
 	void Start () {
@@ -39,14 +46,11 @@ public class DebugComponent : MonoBehaviour {
 	void OnDrawGizmos(){
 		var oldColor = Gizmos.color;
 		Gizmos.color = color;
-		//GizmoTools.drawWireCube(transform, size, pivot, true);
-		//GizmoTools.drawWireSphere(transform, sphereRadius, sphereU, sphereV);
-		//GizmoTools.drawWireCylinder(transform, cylinderRadius, cylinderHeight, cylinderVPivot, cylinderU, cylinderV);
-		Gizmos.color = oldColor;
-
-		GizmoTools.drawWireCone(transform, coneRadius, coneHeight, conePivot, coneUSegments, coneVSegments);
+		GizmoTools.drawWeaponCone(transform, weaponConeSpreadAngle, weaponConeRange, weaponConeDegreesPerSegment, weaponConeRadialSegments);
 
 		if (targetObject)
-			GizmoTools.drawConeLineAdaptive(transform.position, targetObject.position, lineRadius, lineUSegments);
+			GizmoTools.drawWeaponCone(transform.position, targetObject.position, weaponConeSpreadAngle, 
+				weaponConeRange, weaponConeDegreesPerSegment, weaponConeRadialSegments);
+		Gizmos.color = oldColor;
 	}
 }
