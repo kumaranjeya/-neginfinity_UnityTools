@@ -15,10 +15,18 @@ public class DebugComponent : MonoBehaviour {
 
 	public Transform targetObject;
 
+	[TextArea(3, 50)]
+	public string textString = "This is a test. Hello, WORLD!";
+	public TextAnchor textAnchor = TextAnchor.MiddleCenter;
+	public TextAnchor textAlign = TextAnchor.MiddleCenter;
+	public float debugTextSize = 1.0f;
+
 	void OnDrawGizmos(){
 		var oldColor = Gizmos.color;
 		Gizmos.color = color;
-		GizmoTools.drawVisionCone(transform, viewConeHFov, viewConeVFov, viewConeRange, viewConeDegreesPerSegment);
+		//GizmoTools.drawVisionCone(transform, viewConeHFov, viewConeVFov, viewConeRange, viewConeDegreesPerSegment);
+		//GizmoTools.drawVectorTextLine(textString, transform, debugTextSize);
+		GizmoTools.drawVectorText(textString, transform, debugTextSize, textAnchor, textAlign);
 		Gizmos.color = oldColor;
 	}
 }

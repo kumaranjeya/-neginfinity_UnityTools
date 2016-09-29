@@ -524,4 +524,41 @@ public static class GizmoTools{
 		drawVisionCone(transform.position, transform.rotation, hFovDegrees, vFovDegrees, range, angleDegreesPerSegment);
 	}
 
+	public static void drawVectorText(string text, Transform transform, float localLetterScale, TextAnchor anchor, TextAnchor alignment){
+		var coords = new GizmoCoords(transform);
+		coords.xVec *= localLetterScale;
+		coords.yVec *= localLetterScale;
+		coords.zVec *= localLetterScale;
+		drawVectorText(text, coords, anchor, alignment);
+	}
+
+	public static void drawVectorText(string text, Vector3 pos, Quaternion rotation, float letterScale, TextAnchor anchor, TextAnchor alignment){
+		var coords = new GizmoCoords(pos, rotation, new Vector3(letterScale, letterScale, letterScale));
+		drawVectorText(text, coords, anchor, alignment);
+	}
+
+	public static void drawVectorText(string text, GizmoCoords coords, TextAnchor anchor, TextAnchor alignment){
+		VectorText.processText(text, anchor, alignment, (a, b, crd) => {
+			gizmoLine(crd.transformPoint(new Vector3(-a.x, a.y, 0.0f)), crd.transformPoint(new Vector3(-b.x, b.y, 0.0f)));
+		}, coords);
+	}
+
+	public static void drawVectorTextLine(string text, Transform transform, float localLetterScale){
+		var coords = new GizmoCoords(transform);
+		coords.xVec *= localLetterScale;
+		coords.yVec *= localLetterScale;
+		coords.zVec *= localLetterScale;
+		drawVectorTextLine(text, coords);
+	}
+
+	public static void drawVectorTextLine(string text, Vector3 pos, Quaternion rotation, float letterScale){
+		var coords = new GizmoCoords(pos, rotation, new Vector3(letterScale, letterScale, letterScale));
+		drawVectorTextLine(text, coords);
+	}
+
+	public static void drawVectorTextLine(string text, GizmoCoords coords){
+		VectorText.processTextLine(text, (a, b, crd) => 
+			gizmoLine(crd.transformPoint(new Vector3(-a.x, a.y, 0.0f)), crd.transformPoint(new Vector3(-b.x, b.y, 0.0f))), 
+		coords);
+	}
 }
