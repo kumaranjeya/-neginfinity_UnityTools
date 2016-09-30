@@ -251,7 +251,6 @@ public class CustomTextMesh : MonoBehaviour{
 		int indexOffset = 0;
 		for(int i = 0; i < numVerts; i++){
 			var pos = genVerts[i].position * scale;
-			pos.x = -pos.x;
 			verts[i] = pos;//genVerts[i].position * scale;
 			normals[i] = genVerts[i].normal;
 			uv0[i] = genVerts[i].uv0;
@@ -339,7 +338,7 @@ public class CustomTextMesh : MonoBehaviour{
 		var up = transform.TransformVector(new Vector3(0.0f, textSettings.textHeight, 0.0f));
 		var right = transform.TransformVector(new Vector3(-textSettings.textWidth, 0.0f, 0.0f));
 
-		var corner = center - up * anchorPoint.y - right * anchorPoint.x;
+		var corner = center - up * anchorPoint.y - right * (1.0f - anchorPoint.x);
 		var a = corner;
 		var b = a + right;
 		var c = b + up;
