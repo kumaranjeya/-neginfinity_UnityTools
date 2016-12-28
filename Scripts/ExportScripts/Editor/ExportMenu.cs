@@ -5,7 +5,7 @@ using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Ue4Export{
+namespace SceneExport{
 	public class FastJsonWriter{
 		public int indent = 0;
 		public StringBuilder builder = new StringBuilder();
@@ -1094,7 +1094,7 @@ namespace Ue4Export{
 	}
 
 	public class ExportMenu: MonoBehaviour{
-		[MenuItem("GameObject/UE4Export/Export selected objects")]
+		[MenuItem("GameObject/Scene Export/Export selected objects", false, 0)]
 		public static void  exportJsonScene(MenuCommand menuCommand){
 			if (Selection.transforms.Length <= 0)
 				return;
@@ -1120,7 +1120,7 @@ namespace Ue4Export{
 			Utility.saveStringToFile(path, jsonObj.toJsonString());
 		}
 
-		[MenuItem("GameObject/UE4Export/Export current object")]
+		[MenuItem("GameObject/Scene Export/Export current object", false, 0)]
 		public static void  exportJsonObject(MenuCommand menuCommand){
 			if (Selection.activeObject == null)
 				return;
