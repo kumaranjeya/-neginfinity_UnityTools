@@ -43,5 +43,13 @@ namespace MathExtensions{
 			var result = r * new Quaternion(v.x, v.y, v.z, 0.0f) * r.conjugate();
 			return result.getVectorPart();
 		}
+
+		public static Vector3 lerpTo(this Vector3 a, Vector3 b, float t){
+			return Vector3.Lerp(a, b, t);
+		}
+
+		public static Vector3 cross(this Vector3 a, Vector3 b){
+			return Vector3.Cross(a, b);
+		}
 	}
 }
