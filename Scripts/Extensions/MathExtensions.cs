@@ -51,5 +51,24 @@ namespace MathExtensions{
 		public static Vector3 cross(this Vector3 a, Vector3 b){
 			return Vector3.Cross(a, b);
 		}
+
+		public static Vector3 max(this Vector3 a, Vector3 b){
+			return Vector3.Max(a, b);
+		}
+
+		public static Vector3 min(this Vector3 a, Vector3 b){
+			return Vector3.Min(a, b);
+		}
+
+		public static Vector3 componentDivide(this Vector3 a, Vector3 b){
+			return new Vector3(a.x / b.x, a.y / b.y, a.z / b.z);
+		}
+
+		public static Vector3 clampComponents(this Vector3 v, float minValue, float maxValue){
+			return new Vector3(
+				Mathf.Clamp(v.x, minValue, maxValue), 
+				Mathf.Clamp(v.y, minValue, maxValue), 
+				Mathf.Clamp(v.z, minValue, maxValue));
+		}
 	}
 }
