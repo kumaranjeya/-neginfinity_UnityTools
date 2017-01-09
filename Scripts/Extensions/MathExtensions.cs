@@ -70,5 +70,9 @@ namespace MathExtensions{
 				Mathf.Clamp(v.y, minValue, maxValue), 
 				Mathf.Clamp(v.z, minValue, maxValue));
 		}
+
+		public static Vector3 abs(this Vector3 arg){
+			return new Vector3(Mathf.Abs(arg.x), Mathf.Abs(arg.y), Mathf.Abs(arg.z));
+		}
 	}
 }
