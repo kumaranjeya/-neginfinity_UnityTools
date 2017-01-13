@@ -74,5 +74,23 @@ namespace MathExtensions{
 		public static Vector3 abs(this Vector3 arg){
 			return new Vector3(Mathf.Abs(arg.x), Mathf.Abs(arg.y), Mathf.Abs(arg.z));
 		}
+
+		public static Vector3 transformPoint(this Matrix4x4 m, Vector3 arg){
+			var v = new Vector4(arg.x, arg.y, arg.z, 1.0f);
+			v = m * v;
+			return new Vector3(v.x, v.y, v.z);
+		}
+
+		public static Vector3 transformNormal(this Matrix4x4 m, Vector3 arg){
+			var v = new Vector4(arg.x, arg.y, arg.z, 0.0f);
+			v = m * v;
+			return new Vector3(v.x, v.y, v.z);
+		}
+
+		public static Vector3 transformProjectPoint(this Matrix4x4 m, Vector3 arg){
+			var v = new Vector4(arg.x, arg.y, arg.z, 1.0f);
+			v = m * v;
+			return new Vector3(v.x/v.w, v.y/v.w, v.z/v.w);
+		}
 	}
 }
